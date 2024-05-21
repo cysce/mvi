@@ -1,12 +1,17 @@
-# Install Maximo Visual Inspection Edge v1.3
+# Install Maximo Visual Inspection v1.3
 
 ## Part 1 - Hardware & Software Requeriments
 
 ### Hardware
 
 #### Disk space requirements
-* Installation - The IBM Maximo Visual Inspection Edge install package contains Docker containers for deployment on all supported platforms and requires 15 GB to download. Only the images needed for the platform will be installed by the load_images.sh operation, but this requires at least 70 GB available in the file system used by Docker, usually /var/lib/docker.
-* Deploying a model - Models are extracted into the /tmp directory before loading. The size of the model depends on the framework, but at least 1 GB should be available in /tmp before deploying a model.
+IBM Maximo Visual Inspection has the following storage requirements for the initial product installation and for the data sets that will be managed by the product.
+* /var - The product installation requires at least 75 GB of space in the /var file system for the product Docker images. IBM Maximo Visual Inspection also generates log information in this file system. The installation process requires additional space because all Docker images are extracted to disk requiring about 40 GB of space, then the images are loaded by Docker. When the image is loaded, the extracted image is deleted but while images are being extracted and loaded, space is needed for both copies. All application Docker images are extracted and loaded in parallel.
+
+   Recommendation: If you want to minimize the root (/) file system, make sure that /var has its own volume.
+* /opt - IBM Maximo Visual Inspection data sets, models, and runtime data are stored in this file system. This file system must have at least five GB of free space, in addition to any data sets, models or other runtime data for IBM Maximo Visual Inspection to operate successfully. The storage needs will vary depending on the data sets and the contents. For example, video data can require large amounts of storage.
+   
+   Recommendation: If you want to minimize the root (/) file system, make sure that /opt has its own volume. The /opt file system should have at least 40 GB of space, although this value might be more depending on your data sets.
 
 #### GPU model requirements
 * IBM Maximo Visual Inspection Edge is supported only on NVIDIA Tesla GPUs: T4, V100, and P100.
@@ -46,18 +51,6 @@ Note: The Ubuntu Hardware Enablement (HWE) kernel is not supported. Kubernetes s
 ### Install Docker (Ubuntu)
 Use these steps to install Docker.
 
-#### IBM Power
-```
-sudo apt-get update
-sudo apt-get install apt-transport-https ca-certificates curl gnupg-agent software-
-properties-common
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-sudo add-apt-repository "deb [arch=ppc64el] https://download.docker.com/linux/ubuntu
-bionic stable"
-sudo apt-get update
-sudo apt-get install docker-ce=18.06.1~ce~3-0~ubuntu
-```
-
 #### x86_64
 ```
 sudo apt-get update
@@ -85,27 +78,22 @@ sudo systemctl restart docker.service
 
 ### Verify the Setup
 
-#### IBM Power
-```
-docker run --rm nvidia/cuda-ppc64le:10.2-base-ubuntu18.04 nvidia-smi
-```
-
 #### x86_64
 ```
 docker run --rm nvidia/cuda nvidia-smi
 ```
 
-## Part 3 - Installing Maximo Visual Inspection Edge Version 1.3.0
+## Part 3 - Installing Maximo Visual Inspection Version 1.3.0
 
 Decompress the product tar file, change directories to the newly created directory, then run the installation command. For example, using the downloaded package for Power:
 
 ```
-$ tar -xvf vis-inspct-edge-ppc-1.3.0-ppa.tar
-vis-inspct-edge-ppc-1.3.0-ppa/
-vis-inspct-edge-ppc-1.3.0-ppa/visual-inspection-edge-ppc64le-containers-1.3.0.0.tar
-vis-inspct-edge-ppc-1.3.0-ppa/visual-inspection-edge-1.3.0.0-472.22b7a1d.ppc64le.rpm
-vis-inspct-edge-ppc-1.3.0-ppa/visual-inspection-edge_1.3.0.0-472.22b7a1d_ppc64el.deb
-$ cd vis-inspct-edge-ppc-1.3.0
+$ tar -xvf visual-inspect-x86-1.3.0-ppa.tar
+visual-inspect-x86-1.3.0-ppa/
+visual-inspection-x86-1.3.0.0-ppa/visual-inspection-images-x86-1.3.0.0.tar
+visual-inspection-x86-1.3.0.0-ppa/visual-inspection-1.3.0.0-552.07b6d7c.x86_64.rpm
+visual-inspection-x86-1.3.0.0-ppa/visual-inspection_1.3.0.0-552.07b6d7c_amd64.deb
+$ cd visual-inspection-x86-1.3.0.0-ppa
 ```
 
 Run the installation command for the platform you are installing on:
@@ -115,17 +103,22 @@ Run the installation command for the platform you are installing on:
 sudo dpkg -i ./<file_name>.deb
 ```
 
+```
+sudo dpkg -i ./visual-inspection_1.3.0.0-552.07b6d7c_amd64.deb
+```
+
 Load the product Docker images with the container tar file:
 ```
-/opt/ibm/vision-edge/bin/load_images.sh -f <tar_file>
+/opt/ibm/vision/bin/load_images.sh -f <tar_file>
 ```
-The file name has this format: visual-inspection-edge-\<arch\>-containers-\<release
+The file name has this format: visual-inspection-\<arch\>-containers-\<release
 \>.tar, where \<arch\> is x86 or ppc, and \<release\> is the product version being installed. 
 
-IBM Maximo Visual Inspection Edge will be installed at /opt/ibm/vision-edge.
+IBM Maximo Visual Inspection will be installed at /opt/ibm/vision.
 
-## Part 4 - Uninstalling IBM Maximo Visual Inspection Edge
-Follow these steps to uninstall IBM Maximo Visual Inspection Edge:
+## Part 4 - Uninstalling IBM Maximo Visual Inspection
+
+Follow these steps to uninstall IBM Maximo Visual Inspection:
 1. It is recommended that deployed models be undeployed.
 2. To recover disk space, run docker rmi to remove the "deploy" docker images with the current release tag. For example, to remove all deploy images for the 1.3.0.0 release:
    ```
@@ -133,13 +126,8 @@ Follow these steps to uninstall IBM Maximo Visual Inspection Edge:
    ```
 3. Optionally also uninstall the package: 
    
-   • For RHEL:
-   ```
-   sudo yum remove visual-inspection-edge
-   ```
-
    • For Ubuntu:
 
    ```
-   sudo dpkg --remove visual-inspection-edge
+   sudo dpkg --remove visual-inspection
    ```
